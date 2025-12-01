@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Attendee {
+  id                Int       @id @default(autoincrement())
+  fullName          String    @db.VarChar(255)
+  email             String?   @db.VarChar(255)
+  phone             String?   @db.VarChar(20)
+  alternativeContact String? @db.VarChar(255) // Relative's phone, neighbor's phone, etc.
+  address           String?   @db.Text // For people without digital contact
+  designation      Designation
+  passedOutYear     Int?
+  profilePhoto      String?   @db.Text
+  // Alumni specific fields
+  intermediateYear  Int?
+  intermediateGroup String?   @db.VarChar(50)
+  intermediateOther String?   @db.VarChar(100)
+  degreeYear        Int?
+  degreeGroup       String?   @db.VarChar(100)
+  degreeOther       String?   @db.VarChar(100)
+  pgYear            Int?
+  pgCourse          String?   @db.VarChar(100)
+  nativePlace       String?   @db.VarChar(255)
+  residentialAddress String?  @db.Text
+  briefProfile      String?   @db.Text
+  attendeeCode     String    @unique @db.VarChar(50)
+  qrCode           String    @db.Text
+  isScanned        Boolean   @default(false)
+  entryTime        DateTime?
+  // Family/Group registration support
+  isPrimary        Boolean   @default(true) // Primary attendee or companion
+  primaryAttendeeId Int? // If companion, link to primary attendee
+  primaryAttendee   Attendee? @relation("FamilyMembers", fields: [primaryAttendeeId], references: [id])
+  companions        Attendee[] @relation("FamilyMembers")
+  // Registration metadata
+  registeredBy     String?   @db.VarChar(100) // Admin/volunteer name who registered
+  registrationNotes String?  @db.Text // Special notes (e.g., "Registered by son", "No email access")
+  age              Int?      // For children/family members
+  relationship     String?   @db.VarChar(50) // "Spouse", "Child", "Parent", etc.
+  // Entry control for families (single QR, multiple people)
+  maxEntries       Int       @default(1) // Total people allowed on this QR (family size)
+  usedEntries      Int       @default(0) // How many times this QR has been used at gate
+  // Daily entry tracking (one entry per day for multi-day events)
+  entryDays        Json?     // Array of dates (YYYY-MM-DD) when entry occurred
+  // Selected days for multi-day event attendance
+  selectedDays     Json?     // Array of dates (YYYY-MM-DD) that attendee selected to attend
+  createdAt        DateTime  @default(now())
+
+  @@index([attendeeCode])
+  @@index([email])
+  @@index([designation])
+  @@index([isScanned])
+  @@index([primaryAttendeeId])
+  @@map("attendees")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  @@map("admins")
+}
+
+enum Designation {
+  Student
+  Alumni
+  Staff
+  Guest
+  VIP
+}
+

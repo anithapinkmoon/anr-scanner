@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Golden Jubilee Scanner",
+    "slug": "golden-jubilee-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#D97706"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.goldenjubilee.scanner"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#D97706"
+      },
+      "package": "com.goldenjubilee.scanner",
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "web": {},
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Golden Jubilee Scanner to access your camera to scan QR codes."
+        }
+      ]
+    ]
+  }
+}
+
