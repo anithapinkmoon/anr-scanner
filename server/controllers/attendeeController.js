@@ -49,7 +49,16 @@ export const registerAttendee = async (req, res) => {
       pgCourse,
       nativePlace,
       residentialAddress,
-      briefProfile
+      briefProfile,
+      // Staff specific fields
+      staffRole,
+      staffCategory,
+      staffRoleOther,
+      staffTitle,
+      yearOfJoining,
+      isCurrentlyWorking,
+      yearOfLeaving,
+      yearsOfService
     } = req.body;
 
     // Validation - only fullName and designation are required
@@ -73,6 +82,36 @@ export const registerAttendee = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: 'Mobile Number is required',
+        });
+      }
+    }
+
+    // Staff specific validation
+    if (designation === 'Staff') {
+      if (!staffCategory || !staffRole || !yearOfJoining) {
+        return res.status(400).json({
+          success: false,
+          message: 'For Staff: Category, Role, and Year of Joining are required',
+        });
+      }
+      // If not currently working, year of leaving is required
+      if (isCurrentlyWorking === false && !yearOfLeaving) {
+        return res.status(400).json({
+          success: false,
+          message: 'For Staff: Year of Leaving/Retirement is required if not currently working',
+        });
+      }
+      // Title is mandatory for Teaching staff
+      if (staffCategory === 'Teaching' && !staffTitle) {
+        return res.status(400).json({
+          success: false,
+          message: 'For Teaching Staff: Title/Designation (Dr., Professor, etc.) is required',
+        });
+      }
+      if (staffRole === 'Other' && !staffRoleOther) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please specify your role',
         });
       }
     }
@@ -131,6 +170,20 @@ export const registerAttendee = async (req, res) => {
       return Number.isNaN(num) ? null : num;
     };
 
+    // Calculate years of service for staff
+    const calculateYearsOfService = (joinYear, currentlyWorking, leaveYear) => {
+      if (!joinYear) return null;
+      const join = parseYear(joinYear);
+      if (!join) return null;
+      
+      const endYear = currentlyWorking 
+        ? new Date().getFullYear() 
+        : (leaveYear ? parseYear(leaveYear) : new Date().getFullYear());
+      
+      if (!endYear) return null;
+      return endYear - join;
+    };
+
     // Create primary attendee
     const attendeeData = {
       fullName,
@@ -164,6 +217,15 @@ export const registerAttendee = async (req, res) => {
       nativePlace: nativePlace || null,
       residentialAddress: residentialAddress || null,
       briefProfile: briefProfile || null,
+      // Staff specific fields
+      staffRole: designation === 'Staff' ? (staffRole === 'Other' ? staffRoleOther : staffRole) : null,
+      staffCategory: designation === 'Staff' ? staffCategory || null : null,
+      staffRoleOther: designation === 'Staff' && staffRole === 'Other' ? staffRoleOther : null,
+      staffTitle: designation === 'Staff' && staffCategory === 'Teaching' ? staffTitle || null : null,
+      yearOfJoining: designation === 'Staff' ? parseYear(yearOfJoining) : null,
+      isCurrentlyWorking: designation === 'Staff' ? (isCurrentlyWorking !== undefined ? isCurrentlyWorking : true) : null,
+      yearOfLeaving: designation === 'Staff' && !isCurrentlyWorking ? parseYear(yearOfLeaving) : null,
+      yearsOfService: designation === 'Staff' ? calculateYearsOfService(yearOfJoining, isCurrentlyWorking, yearOfLeaving) : null,
     };
 
     const attendee = await Attendee.create(attendeeData);

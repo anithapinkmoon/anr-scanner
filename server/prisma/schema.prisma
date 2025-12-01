@@ -31,8 +31,17 @@ model Attendee {
   pgCourse          String?   @db.VarChar(100)
   nativePlace       String?   @db.VarChar(255)
   residentialAddress String?  @db.Text
-  briefProfile      String?   @db.Text
-  attendeeCode     String    @unique @db.VarChar(50)
+      briefProfile      String?   @db.Text
+      // Staff specific fields
+      staffRole         String?   @db.VarChar(100) // Doctor, Professor, Lecturer, etc.
+      staffCategory     String?   @db.VarChar(50) // Teaching, Non-teaching
+      staffRoleOther    String?   @db.VarChar(100) // If "Other" is selected
+      staffTitle        String?   @db.VarChar(50) // Dr., Professor, Mr., Mrs., Ms., etc. (mandatory for Teaching)
+      yearOfJoining     Int?      // Year when staff joined
+      isCurrentlyWorking Boolean? @default(true) // Currently working or retired/resigned
+      yearOfLeaving     Int?      // Year when staff retired/resigned (if not currently working)
+      yearsOfService    Int?      // Years of working/service (auto-calculated)
+      attendeeCode     String    @unique @db.VarChar(50)
   qrCode           String    @db.Text
   isScanned        Boolean   @default(false)
   entryTime        DateTime?

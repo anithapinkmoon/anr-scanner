@@ -61,15 +61,68 @@ const Register = () => {
     nativePlace: '',
     residentialAddress: '',
     briefProfile: '',
+    // Staff specific fields
+    staffRole: '',
+    staffCategory: '',
+    staffRoleOther: '',
+    staffTitle: '',
+    yearOfJoining: '',
+    isCurrentlyWorking: true, // Default to currently working
+    yearOfLeaving: '',
+    yearsOfService: '', // Auto-calculated, read-only
   });
   const [loading, setLoading] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    // If category changes, reset role and title
+    if (e.target.name === 'staffCategory') {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+        staffRole: '', // Reset role when category changes
+        staffRoleOther: '', // Reset other role field
+        staffTitle: '', // Reset title when category changes
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    }
+  };
+
+  // Get staff roles based on category - College specific roles only
+  const getStaffRoles = () => {
+    if (formData.staffCategory === 'Teaching') {
+      return [
+        { value: 'Principal', label: 'Principal' },
+        { value: 'Vice Principal', label: 'Vice Principal' },
+        { value: 'Professor', label: 'Professor' },
+        { value: 'Associate Professor', label: 'Associate Professor' },
+        { value: 'Assistant Professor', label: 'Assistant Professor' },
+        { value: 'Lecturer', label: 'Lecturer' },
+        { value: 'Physical Director', label: 'Physical Director' },
+        { value: 'College Doctor', label: 'College Doctor' },
+        { value: 'Other', label: 'Other' },
+      ];
+    } else if (formData.staffCategory === 'Non-teaching') {
+      return [
+        { value: 'Librarian', label: 'Librarian' },
+        { value: 'Senior Clerk', label: 'Senior Clerk' },
+        { value: 'Junior Clerk', label: 'Junior Clerk' },
+        { value: 'Accountant', label: 'Accountant' },
+        { value: 'Lab Assistant', label: 'Lab Assistant' },
+        { value: 'Lab Technician', label: 'Lab Technician' },
+        { value: 'Office Assistant', label: 'Office Assistant' },
+        { value: 'Computer Operator', label: 'Computer Operator' },
+        { value: 'Store Keeper', label: 'Store Keeper' },
+        { value: 'Security Guard', label: 'Security Guard' },
+        { value: 'Peon', label: 'Peon' },
+        { value: 'Other', label: 'Other' },
+      ];
+    }
+    return [];
   };
 
   const handleFileChange = (e) => {
@@ -124,6 +177,32 @@ const Register = () => {
         }
       }
 
+      // Validate Staff required fields
+      if (formData.designation === 'Staff') {
+        if (!formData.staffCategory || !formData.staffRole || !formData.yearOfJoining) {
+          toast.error('For Staff: Category, Role, and Year of Joining are required');
+          setLoading(false);
+          return;
+        }
+        // If not currently working, year of leaving is required
+        if (!formData.isCurrentlyWorking && !formData.yearOfLeaving) {
+          toast.error('For Staff: Year of Leaving/Retirement is required if not currently working');
+          setLoading(false);
+          return;
+        }
+        // Title is mandatory for Teaching staff
+        if (formData.staffCategory === 'Teaching' && !formData.staffTitle) {
+          toast.error('For Teaching Staff: Title/Designation (Dr., Professor, etc.) is required');
+          setLoading(false);
+          return;
+        }
+        if (formData.staffRole === 'Other' && !formData.staffRoleOther) {
+          toast.error('Please specify your role');
+          setLoading(false);
+          return;
+        }
+      }
+
       const payload = {
         ...formData,
         email: formData.email.trim() || null,
@@ -136,6 +215,13 @@ const Register = () => {
         intermediateYear: formData.intermediateYear ? parseInt(formData.intermediateYear, 10) : null,
         degreeYear: formData.degreeYear ? parseInt(formData.degreeYear, 10) : null,
         pgYear: formData.pgYear ? parseInt(formData.pgYear, 10) : null,
+        // Staff specific fields - parse years to integers
+        yearOfJoining: formData.yearOfJoining ? parseInt(formData.yearOfJoining, 10) : null,
+        isCurrentlyWorking: formData.designation === 'Staff' ? formData.isCurrentlyWorking : null,
+        yearOfLeaving: formData.designation === 'Staff' && !formData.isCurrentlyWorking && formData.yearOfLeaving 
+          ? parseInt(formData.yearOfLeaving, 10) 
+          : null,
+        yearsOfService: formData.yearsOfService ? parseInt(formData.yearsOfService, 10) : null,
       };
 
       const response = await api.post('/register', payload);
@@ -265,6 +351,27 @@ const Register = () => {
                   hasCompanions: false,
                   companions: [],
                   selectedDays: [],
+                  // Alumni fields
+                  intermediateYear: '',
+                  intermediateGroup: '',
+                  intermediateOther: '',
+                  degreeYear: '',
+                  degreeGroup: '',
+                  degreeOther: '',
+                  pgYear: '',
+                  pgCourse: '',
+                  nativePlace: '',
+                  residentialAddress: '',
+                  briefProfile: '',
+                  // Staff fields
+                  staffRole: '',
+                  staffCategory: '',
+                  staffRoleOther: '',
+                  staffTitle: '',
+                  yearOfJoining: '',
+                  isCurrentlyWorking: true,
+                  yearOfLeaving: '',
+                  yearsOfService: '',
                 });
               }}
               className="bg-gradient-to-r from-indigo-700 to-indigo-800 text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:from-indigo-800 hover:to-indigo-900 transition-all transform hover:scale-[1.02]"
@@ -341,21 +448,21 @@ const Register = () => {
                     />
                   </div>
                 </div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-center mb-3 uppercase tracking-wide leading-tight">
+                <h1 className="text-3xl lg:text-4xl font-bold text-center mb-3 uppercase tracking-wide leading-tight">
                   Akkineni Nageswara Rao College
                 </h1>
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <div className="h-px bg-indigo-300 flex-1 max-w-20"></div>
-                  <p className="text-center text-indigo-200 text-sm font-medium px-2">
+                  <p className="text-center text-indigo-200 text-base font-medium px-2">
                     (with Post - Graduate Courses)
                   </p>
                   <div className="h-px bg-indigo-300 flex-1 max-w-20"></div>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-center text-indigo-200 text-xs font-medium">
+                  <p className="text-center text-indigo-200 text-sm font-medium">
                     Autonomous & Affiliated to Krishna University
                   </p>
-                  <p className="text-center text-indigo-200 text-xs font-medium">
+                  <p className="text-center text-indigo-200 text-sm font-medium">
                     Reaccredited by NAAC with 'A' Grade
                   </p>
                 </div>
@@ -364,21 +471,21 @@ const Register = () => {
               {/* Event Name */}
               <div className="mb-10 text-center">
                 <div className="inline-block mb-4">
-                  <span className="text-6xl lg:text-7xl font-bold mb-2 block leading-none bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-300 bg-clip-text text-transparent drop-shadow-lg">
-                    75
+                  <span className="text-7xl lg:text-8xl font-bold mb-2 block leading-none bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-300 bg-clip-text text-transparent drop-shadow-lg">
+                    75 
                   </span>
                 </div>
-                <h2 className="text-3xl lg:text-4xl font-bold mb-3 uppercase tracking-wider leading-tight">
+                <h2 className="text-4xl lg:text-5xl font-bold mb-3 uppercase tracking-wider leading-tight">
                   Diamond Jubilee
                 </h2>
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <div className="h-px bg-yellow-400 flex-1 max-w-16"></div>
-                  <p className="text-xl text-yellow-200 font-semibold px-2">
+                  <p className="text-2xl text-yellow-200 font-semibold px-2">
                     Event Registration
                   </p>
                   <div className="h-px bg-yellow-400 flex-1 max-w-16"></div>
                 </div>
-                <p className="text-indigo-200 text-sm font-medium">
+                <p className="text-indigo-200 text-base font-medium">
                   Celebrating 75 Years of Excellence
                 </p>
               </div>
@@ -709,6 +816,210 @@ const Register = () => {
                         className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
                       />
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Staff Specific Fields */}
+              {formData.designation === 'Staff' && (
+                <div className="space-y-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-4">Staff Information</h3>
+                  
+                  {/* Staff Category */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Category <span className="text-red-500">*</span></label>
+                    <select
+                      name="staffCategory"
+                      value={formData.staffCategory}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Teaching">Teaching</option>
+                      <option value="Non-teaching">Non-teaching</option>
+                    </select>
+                  </div>
+
+                  {/* Staff Title - Only for Teaching */}
+                  {formData.staffCategory === 'Teaching' && (
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Title/Designation <span className="text-red-500">*</span>
+                        <span className="text-gray-500 text-xs ml-2">(Dr., Professor, etc.)</span>
+                      </label>
+                      <select
+                        name="staffTitle"
+                        value={formData.staffTitle}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="">Select Title</option>
+                        <option value="Dr.">Dr.</option>
+                        <option value="Professor">Professor</option>
+                        <option value="Prof. Dr.">Prof. Dr.</option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Mrs.">Mrs.</option>
+                        <option value="Ms.">Ms.</option>
+                        <option value="Miss">Miss</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Staff Role - Only show if category is selected */}
+                  {formData.staffCategory && (
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Role/Designation <span className="text-red-500">*</span>
+                        <span className="text-gray-500 text-xs ml-2">
+                          ({formData.staffCategory} roles)
+                        </span>
+                      </label>
+                      <select
+                        name="staffRole"
+                        value={formData.staffRole}
+                        onChange={handleChange}
+                        required
+                        disabled={!formData.staffCategory}
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Select Role</option>
+                        {getStaffRoles().map((role) => (
+                          <option key={role.value} value={role.value}>
+                            {role.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Other Role Input */}
+                  {formData.staffRole === 'Other' && (
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Specify Role <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="staffRoleOther"
+                        value={formData.staffRoleOther}
+                        onChange={handleChange}
+                        required={formData.staffRole === 'Other'}
+                        placeholder="Enter your role/designation"
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Year of Joining */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Year of Joining <span className="text-red-500">*</span></label>
+                    <input
+                      type="number"
+                      name="yearOfJoining"
+                      value={formData.yearOfJoining}
+                      onChange={(e) => {
+                        handleChange(e);
+                        // Auto-calculate years of service when year of joining changes
+                        if (e.target.value) {
+                          const currentYear = new Date().getFullYear();
+                          const endYear = formData.isCurrentlyWorking 
+                            ? currentYear 
+                            : (formData.yearOfLeaving || currentYear);
+                          const calculatedYears = endYear - parseInt(e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            yearOfJoining: e.target.value,
+                            yearsOfService: calculatedYears > 0 ? calculatedYears.toString() : '',
+                          }));
+                        }
+                      }}
+                      required
+                      placeholder="e.g., 2010"
+                      min="1950"
+                      max={new Date().getFullYear()}
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Currently Working */}
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isCurrentlyWorking"
+                      id="isCurrentlyWorking"
+                      checked={formData.isCurrentlyWorking}
+                      onChange={(e) => {
+                        const isWorking = e.target.checked;
+                        const currentYear = new Date().getFullYear();
+                        let calculatedYears = '';
+                        
+                        if (formData.yearOfJoining) {
+                          const endYear = isWorking ? currentYear : (formData.yearOfLeaving || currentYear);
+                          calculatedYears = (endYear - parseInt(formData.yearOfJoining)).toString();
+                        }
+                        
+                        setFormData({
+                          ...formData,
+                          isCurrentlyWorking: isWorking,
+                          yearOfLeaving: isWorking ? '' : formData.yearOfLeaving,
+                          yearsOfService: calculatedYears,
+                        });
+                      }}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <label htmlFor="isCurrentlyWorking" className="ml-2 text-xs text-gray-600">
+                      Currently Working <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+
+                  {/* Year of Leaving - Only show if not currently working */}
+                  {!formData.isCurrentlyWorking && (
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Year of Leaving/Retirement <span className="text-red-500">*</span></label>
+                      <input
+                        type="number"
+                        name="yearOfLeaving"
+                        value={formData.yearOfLeaving}
+                        onChange={(e) => {
+                          handleChange(e);
+                          // Auto-calculate years of service when year of leaving changes
+                          if (formData.yearOfJoining && e.target.value) {
+                            const calculatedYears = parseInt(e.target.value) - parseInt(formData.yearOfJoining);
+                            setFormData(prev => ({
+                              ...prev,
+                              yearOfLeaving: e.target.value,
+                              yearsOfService: calculatedYears > 0 ? calculatedYears.toString() : '',
+                            }));
+                          }
+                        }}
+                        required={!formData.isCurrentlyWorking}
+                        placeholder="e.g., 2020"
+                        min={formData.yearOfJoining ? parseInt(formData.yearOfJoining) : 1950}
+                        max={new Date().getFullYear()}
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Years of Service - Auto-calculated, read-only */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Years of Service</label>
+                    <input
+                      type="text"
+                      value={formData.yearsOfService ? `${formData.yearsOfService} years` : 'Enter Year of Joining to calculate'}
+                      readOnly
+                      disabled
+                      className="w-full px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
+                    />
+                    {formData.yearOfJoining && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.isCurrentlyWorking 
+                          ? `Calculated: ${new Date().getFullYear() - parseInt(formData.yearOfJoining)} years (from ${formData.yearOfJoining} to present)`
+                          : formData.yearOfLeaving 
+                            ? `Calculated: ${parseInt(formData.yearOfLeaving) - parseInt(formData.yearOfJoining)} years (from ${formData.yearOfJoining} to ${formData.yearOfLeaving})`
+                            : 'Enter Year of Leaving to calculate'}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
