@@ -2,7 +2,8 @@
   "version": 2,
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": "",
+  "outputDirectory": null,
+  "framework": null,
   "builds": [
     {
       "src": "api/index.js",
