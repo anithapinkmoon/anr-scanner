@@ -5,11 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "extra": {
-      "eas": {
-        "projectId": "5f002f76"
-      }
-    },
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#D97706"
