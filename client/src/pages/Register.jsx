@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
+import { registerAttendee } from '../services/apiService';
 import InvitationCard from '../components/InvitationCard';
 import collegeLogo from '../assets/diamond.jpg';
 import collegeBannerLogo from '../assets/anr-college-logo.jpg';
@@ -35,6 +35,18 @@ const Register = () => {
 
   const eventDates = getEventDates();
 
+  // Generate year options for dropdowns (1950 to current year)
+  const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let year = currentYear; year >= 1950; year--) {
+      years.push(year);
+    }
+    return years;
+  };
+
+  const yearOptions = generateYearOptions();
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -42,6 +54,7 @@ const Register = () => {
     alternativeContact: '',
     address: '',
     designation: '',
+    designationOther: '', // For "Other" designation
     passedOutYear: '',
     profilePhoto: '',
     registeredBy: '',
@@ -162,16 +175,17 @@ const Register = () => {
         }
       }
 
+      // Validate phone number (required for all)
+      if (!formData.phone || formData.phone.trim() === '') {
+        toast.error('Mobile Number is required');
+        setLoading(false);
+        return;
+      }
+
       // Validate Alumni required fields
       if (formData.designation === 'Alumni') {
-        if (!formData.nativePlace || !formData.residentialAddress || !formData.briefProfile) {
-          toast.error('For Alumni: Native Place, Residential Address, and Brief Profile are required');
-          setLoading(false);
-          return;
-        }
-        // Phone is already validated in the general form above
-        if (!formData.phone) {
-          toast.error('Mobile Number is required');
+        if (!formData.briefProfile) {
+          toast.error('For Alumni: Brief Profile is required');
           setLoading(false);
           return;
         }
@@ -209,6 +223,7 @@ const Register = () => {
         phone: formData.phone.trim() || null,
         alternativeContact: formData.alternativeContact.trim() || null,
         address: formData.address.trim() || null,
+        designationOther: formData.designation === 'Other' ? formData.designationOther.trim() : null,
         passedOutYear: formData.passedOutYear ? parseInt(formData.passedOutYear, 10) : null,
         companions: formData.hasCompanions ? formData.companions : [],
         // Alumni specific fields - parse years to integers
@@ -224,15 +239,15 @@ const Register = () => {
         yearsOfService: formData.yearsOfService ? parseInt(formData.yearsOfService, 10) : null,
       };
 
-      const response = await api.post('/register', payload);
+      const response = await registerAttendee(payload);
       setRegistrationData({
-        ...response.data.data,
+        ...response.data,
         email: formData.email || null,
         phone: formData.phone || null,
         passedOutYear: formData.passedOutYear || null,
         profilePhoto: formData.profilePhoto || null,
-        companions: response.data.data.companions || [],
-        selectedDays: response.data.data.selectedDays || formData.selectedDays || [],
+        companions: response.data.companions || [],
+        selectedDays: response.data.selectedDays || formData.selectedDays || [],
       });
       toast.success(
         formData.hasCompanions && formData.companions.length > 0
@@ -344,6 +359,7 @@ const Register = () => {
                   alternativeContact: '',
                   address: '',
                   designation: '',
+                  designationOther: '',
                   passedOutYear: '',
                   profilePhoto: '',
                   registeredBy: '',
@@ -578,8 +594,8 @@ const Register = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  required={formData.designation === 'Alumni'}
-                  placeholder={formData.designation === 'Alumni' ? 'Enter your mobile number *' : 'Enter your phone number'}
+                  required
+                  placeholder="Enter your mobile number *"
                   className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
                 />
               </div>
@@ -621,8 +637,7 @@ const Register = () => {
                   <option value="Student">Student</option>
                   <option value="Alumni">Alumni</option>
                   <option value="Staff">Staff</option>
-                  <option value="Guest">Guest</option>
-                  <option value="VIP">VIP</option>
+                  <option value="Other">Other</option>
                 </select>
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
                   <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,6 +645,21 @@ const Register = () => {
                   </svg>
                 </div>
               </div>
+
+              {/* Other Designation Input */}
+              {formData.designation === 'Other' && (
+                <div>
+                  <input
+                    type="text"
+                    name="designationOther"
+                    value={formData.designationOther}
+                    onChange={handleChange}
+                    required={formData.designation === 'Other'}
+                    placeholder="Please specify your designation *"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  />
+                </div>
+              )}
 
               {/* Alumni Specific Fields */}
               {formData.designation === 'Alumni' && (
@@ -642,16 +672,19 @@ const Register = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Year of Admission</label>
-                        <input
-                          type="number"
+                        <select
                           name="intermediateYear"
                           value={formData.intermediateYear}
                           onChange={handleChange}
-                          placeholder="e.g., 2010"
-                          min="1950"
-                          max={new Date().getFullYear()}
                           className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
+                        >
+                          <option value="">Select Year</option>
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Intermediate Group</label>
@@ -691,16 +724,19 @@ const Register = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Year of Admission</label>
-                        <input
-                          type="number"
+                        <select
                           name="degreeYear"
                           value={formData.degreeYear}
                           onChange={handleChange}
-                          placeholder="e.g., 2012"
-                          min="1950"
-                          max={new Date().getFullYear()}
                           className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
+                        >
+                          <option value="">Select Year</option>
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Degree Group</label>
@@ -743,16 +779,19 @@ const Register = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Year of Admission</label>
-                        <input
-                          type="number"
+                        <select
                           name="pgYear"
                           value={formData.pgYear}
                           onChange={handleChange}
-                          placeholder="e.g., 2014"
-                          min="1950"
-                          max={new Date().getFullYear()}
                           className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        />
+                        >
+                          <option value="">Select Year</option>
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">P.G. Course</label>
@@ -778,27 +817,25 @@ const Register = () => {
                     </div>
                   </div>
 
-                  {/* Required Fields */}
+                  {/* Additional Fields */}
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">Native Place <span className="text-red-500">*</span></label>
+                      <label className="block text-xs text-gray-600 mb-1">Native Place</label>
                       <input
                         type="text"
                         name="nativePlace"
                         value={formData.nativePlace}
                         onChange={handleChange}
-                        required
                         placeholder="Enter your native place"
                         className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-600 mb-1">Residential Address <span className="text-red-500">*</span></label>
+                      <label className="block text-xs text-gray-600 mb-1">Residential Address</label>
                       <textarea
                         name="residentialAddress"
                         value={formData.residentialAddress}
                         onChange={handleChange}
-                        required
                         rows={2}
                         placeholder="Enter your complete residential address"
                         className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 resize-none"
@@ -1182,11 +1219,10 @@ const Register = () => {
                               className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-700"
                             >
                               <option value="">Same as primary</option>
-                              <option value="Guest">Guest</option>
                               <option value="Student">Student</option>
                               <option value="Alumni">Alumni</option>
                               <option value="Staff">Staff</option>
-                              <option value="VIP">VIP</option>
+                              <option value="Other">Other</option>
                             </select>
                           </div>
                         </div>

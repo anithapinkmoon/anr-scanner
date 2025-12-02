@@ -17,8 +17,9 @@ model Attendee {
   phone             String?   @db.VarChar(20)
   alternativeContact String? @db.VarChar(255) // Relative's phone, neighbor's phone, etc.
   address           String?   @db.Text // For people without digital contact
-  designation      Designation
-  passedOutYear     Int?
+      designation      Designation
+      designationOther String?   @db.VarChar(100) // If designation is "Other", specify here
+      passedOutYear     Int?
   profilePhoto      String?   @db.Text
   // Alumni specific fields
   intermediateYear  Int?
@@ -85,7 +86,6 @@ enum Designation {
   Student
   Alumni
   Staff
-  Guest
-  VIP
+  Other
 }
 

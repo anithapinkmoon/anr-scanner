@@ -24,6 +24,7 @@ export const registerAttendee = async (req, res) => {
       email, 
       phone, 
       designation, 
+      designationOther,
       passedOutYear, 
       profilePhoto,
       alternativeContact,
@@ -61,11 +62,27 @@ export const registerAttendee = async (req, res) => {
       yearsOfService
     } = req.body;
 
-    // Validation - only fullName and designation are required
+    // Validation - fullName, designation, and phone are required for all
     if (!fullName || !designation) {
       return res.status(400).json({
         success: false,
         message: 'Full name and designation are required',
+      });
+    }
+
+    // Phone number is required for all attendees
+    if (!phone || phone.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile Number is required',
+      });
+    }
+
+    // If designation is "Other", designationOther is required
+    if (designation === 'Other' && (!designationOther || designationOther.trim() === '')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please specify your designation',
       });
     }
 
@@ -75,13 +92,6 @@ export const registerAttendee = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: 'For Alumni: Native Place, Residential Address, and Brief Profile are required',
-        });
-      }
-      // Phone is already validated as a general field, but ensure it's provided for Alumni
-      if (!phone) {
-        return res.status(400).json({
-          success: false,
-          message: 'Mobile Number is required',
         });
       }
     }
@@ -192,6 +202,7 @@ export const registerAttendee = async (req, res) => {
       alternativeContact: alternativeContact || null,
       address: address || null,
       designation,
+      designationOther: designation === 'Other' ? designationOther : null,
       passedOutYear: designation === 'Alumni' ? passedOutYear : undefined,
       profilePhoto: profilePhoto || null,
       attendeeCode,
@@ -245,6 +256,9 @@ export const registerAttendee = async (req, res) => {
           alternativeContact: companion.alternativeContact || null,
           address: companion.address || null,
           designation: companion.designation || designation,
+          designationOther: (companion.designation || designation) === 'Other' 
+            ? (companion.designationOther || designationOther) 
+            : null,
           passedOutYear:
             companion.designation === 'Alumni' && companion.passedOutYear
               ? companion.passedOutYear

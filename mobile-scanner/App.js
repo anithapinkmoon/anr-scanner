@@ -115,7 +115,7 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.title}>🎉 Golden Jubilee</Text>
+        <Text style={styles.title}>Diamond Jubilee</Text>
         <Text style={styles.subtitle}>QR Code Scanner</Text>
       </View>
 

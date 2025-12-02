@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api';
+import { adminLogin } from '../services/apiService';
 
 const AuthContext = createContext();
 
@@ -23,8 +23,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/admin/login', { email, password });
-      const { token } = response.data;
+      const response = await adminLogin(email, password);
+      const { token } = response;
       localStorage.setItem('adminToken', token);
       setIsAuthenticated(true);
       return { success: true };

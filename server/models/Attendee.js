@@ -66,14 +66,19 @@ export const Attendee = {
         });
       }
 
-      // Handle designation filter
-      if (query.designation) {
+      // Handle designation filter (only if not empty string)
+      if (query.designation && query.designation.trim() !== '') {
         where.designation = query.designation;
       }
 
       // Handle isScanned filter
       if (query.isScanned !== undefined) {
         where.isScanned = query.isScanned;
+      }
+
+      // Handle primaryAttendeeId filter
+      if (query.primaryAttendeeId !== undefined && query.primaryAttendeeId !== null) {
+        where.primaryAttendeeId = query.primaryAttendeeId;
       }
 
       const options = {
@@ -130,14 +135,19 @@ export const Attendee = {
         });
       }
 
-      // Handle designation filter
-      if (query.designation) {
+      // Handle designation filter (only if not empty string)
+      if (query.designation && query.designation.trim() !== '') {
         where.designation = query.designation;
       }
 
       // Handle isScanned filter
       if (query.isScanned !== undefined) {
         where.isScanned = query.isScanned;
+      }
+
+      // Handle primaryAttendeeId filter
+      if (query.primaryAttendeeId !== undefined && query.primaryAttendeeId !== null) {
+        where.primaryAttendeeId = query.primaryAttendeeId;
       }
 
       return await prisma.attendee.count({ where });

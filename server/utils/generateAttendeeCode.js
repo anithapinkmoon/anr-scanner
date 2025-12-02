@@ -4,8 +4,7 @@ const designationPrefixes = {
   Student: 'STU',
   Alumni: 'ALU',
   Staff: 'STF',
-  Guest: 'GST',
-  VIP: 'VIP',
+  Other: 'OTH',
 };
 
 export const generateAttendeeCode = (designation) => {

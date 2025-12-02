@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
+import { verifyQRCode } from '../services/apiService';
 import QRScanner from '../components/QRScanner';
 
 const Scan = () => {
@@ -12,8 +12,8 @@ const Scan = () => {
     setVerificationResult(null);
 
     try {
-      const response = await api.get(`/verify?code=${decodedText}`);
-      setVerificationResult(response.data);
+      const response = await verifyQRCode(decodedText);
+      setVerificationResult(response);
       
       if (response.data.status === 'success') {
         toast.success('Entry verified successfully!');

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
+import { getAttendees, markAttendeeEntry, exportAttendeesCSV, exportAttendeesPDF, downloadBlob } from '../services/apiService';
 import Table from '../components/Table';
 
 const Attendees = () => {
@@ -35,16 +35,14 @@ const Attendees = () => {
   const fetchAttendees = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
+      const response = await getAttendees({
         page: pagination.page,
         limit: pagination.limit,
         ...(search && { search }),
         ...(designation && { designation }),
       });
-
-      const response = await api.get(`/admin/attendees?${params}`);
-      setAttendees(response.data.data.attendees);
-      setPagination(response.data.data.pagination);
+      setAttendees(response.data.attendees);
+      setPagination(response.data.pagination);
     } catch (error) {
       toast.error('Failed to fetch attendees');
     } finally {
@@ -54,16 +52,8 @@ const Attendees = () => {
 
   const handleExportCSV = async () => {
     try {
-      const response = await api.get('/admin/export/csv', {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'attendees_export.csv');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const blob = await exportAttendeesCSV();
+      downloadBlob(blob, 'attendees_export.csv');
       toast.success('CSV exported successfully');
     } catch (error) {
       toast.error('Failed to export CSV');
@@ -72,16 +62,8 @@ const Attendees = () => {
 
   const handleExportPDF = async () => {
     try {
-      const response = await api.get('/admin/export/pdf', {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'attendees_export.pdf');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const blob = await exportAttendeesPDF();
+      downloadBlob(blob, 'attendees_export.pdf');
       toast.success('PDF exported successfully');
     } catch (error) {
       toast.error('Failed to export PDF');
@@ -90,7 +72,7 @@ const Attendees = () => {
 
   const handleMarkEntry = async (id) => {
     try {
-      await api.patch(`/admin/attendees/${id}/mark-entry`);
+      await markAttendeeEntry(id);
       toast.success('Entry marked successfully');
       fetchAttendees();
       setSelectedAttendee(null);

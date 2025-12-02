@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
+import { getDashboardStats } from '../services/apiService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -24,8 +24,8 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await api.get('/admin/stats');
-      setStats(response.data.data);
+      const response = await getDashboardStats();
+      setStats(response.data);
     } catch (error) {
       toast.error('Failed to fetch statistics');
     } finally {
