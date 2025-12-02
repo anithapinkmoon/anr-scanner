@@ -668,7 +668,7 @@ const Register = () => {
                   
                   {/* Intermediate/PUC Section */}
                   <div className="space-y-3 border-b border-blue-200 pb-4">
-                    <h4 className="text-sm font-semibold text-indigo-800">Intermediate / PUC (Optional)</h4>
+                    <h4 className="text-sm font-semibold text-indigo-800">Intermediate / PUC </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Year of Admission</label>
@@ -720,7 +720,7 @@ const Register = () => {
 
                   {/* Degree Section */}
                   <div className="space-y-3 border-b border-blue-200 pb-4">
-                    <h4 className="text-sm font-semibold text-indigo-800">Degree (Optional)</h4>
+                    <h4 className="text-sm font-semibold text-indigo-800">Degree</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Year of Admission</label>
@@ -775,7 +775,7 @@ const Register = () => {
 
                   {/* P.G. Section */}
                   <div className="space-y-3 border-b border-blue-200 pb-4">
-                    <h4 className="text-sm font-semibold text-indigo-800">P.G. (Optional)</h4>
+                    <h4 className="text-sm font-semibold text-indigo-800">P.G.</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">Year of Admission</label>
