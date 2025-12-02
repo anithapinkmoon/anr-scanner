@@ -7,8 +7,15 @@ import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
 
+// CORS configuration - allow frontend domain
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*', // Set your frontend URL in Vercel env vars
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -31,35 +38,42 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to database and start server
+// Connect to database and start server (only for non-serverless environments)
 const startServer = async () => {
   try {
     // Test Prisma connection
     await prisma.$connect();
     console.log('✅ Prisma Connected to MySQL');
     
-    app.listen(config.PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${config.PORT}`);
-      console.log(`📱 Mobile scanner can connect at: http://<your-ip>:${config.PORT}/api`);
-    });
+    // Only start listening if not in Vercel serverless environment
+    if (!process.env.VERCEL) {
+      app.listen(config.PORT, '0.0.0.0', () => {
+        console.log(`🚀 Server running on port ${config.PORT}`);
+        console.log(`📱 Mobile scanner can connect at: http://<your-ip>:${config.PORT}/api`);
+      });
+    }
   } catch (error) {
     console.error('❌ Database connection error:', error);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
   }
 };
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
+// Graceful shutdown (only for non-serverless)
+if (!process.env.VERCEL) {
+  process.on('SIGINT', async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });
 
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
+  process.on('SIGTERM', async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });
 
-startServer();
+  startServer();
+}
 
 export default app;
 

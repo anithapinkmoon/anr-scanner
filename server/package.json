@@ -10,7 +10,9 @@
     "seed": "node utils/seed.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "build": "prisma generate",
+    "vercel-build": "prisma generate"
   },
   "keywords": ["mern", "qr-code", "event-registration"],
   "author": "",
