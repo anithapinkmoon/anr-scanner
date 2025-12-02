@@ -5,7 +5,7 @@ import axios from 'axios';
 // For production: Use your deployed backend URL
 const API_BASE_URL = __DEV__ 
   ? 'http://10.90.35.221:5000/api' // Your computer's IP address - UPDATE THIS if your IP changes
-  : 'https://your-backend-url.com/api';
+  : 'https://anr-scanner-t1b3.vercel.app/api'; // Production backend URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,
