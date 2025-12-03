@@ -366,6 +366,13 @@ const InvitationCard = ({ qrCode, attendeeCode, fullName, email, phone, designat
           <div className="absolute bottom-16 right-20 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-orange-300"></div>
           <div className="absolute bottom-12 left-32 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-l-transparent border-r-transparent border-b-gray-300"></div>
           <div className="absolute bottom-20 right-40 w-0 h-0 border-l-[7px] border-r-[7px] border-b-[11px] border-l-transparent border-r-transparent border-b-teal-300"></div>
+          
+          {/* Powered By Notice */}
+          <div className="absolute bottom-2 left-0 right-0 text-center">
+            <p className="text-xs text-white opacity-95 font-semibold">
+              Powered By : <a href="https://pinkmoontech.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-100 font-bold text-yellow-200 cursor-pointer" style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>PinkMoon Technologies Pvt Ltd</a>
+            </p>
+          </div>
         </div>
       </div>
 
