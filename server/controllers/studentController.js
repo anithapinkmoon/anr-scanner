@@ -81,14 +81,33 @@ export const importStudentsFromExcel = async (req, res) => {
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       
-      // Map Excel columns (adjust based on your Excel format)
-      // Expected columns: Roll Number, Name, Course, Batch, Email (optional), Phone (optional)
-      const rollNumber = row['Roll Number'] || row['RollNumber'] || row['Roll No'] || row['RollNo'] || row['ROLL NUMBER'] || '';
-      const fullName = row['Name'] || row['Full Name'] || row['FullName'] || row['NAME'] || '';
-      const course = row['Course'] || row['COURSE'] || '';
-      const batch = row['Batch'] || row['BATCH'] || '';
-      const email = row['Email'] || row['EMAIL'] || row['Email Id'] || '';
-      const phone = row['Phone'] || row['Phone Number'] || row['PhoneNumber'] || row['PHONE'] || '';
+      // Map Excel columns - based on actual Excel format: S.No., NAME, COURSE, ROLL NO, BATCH
+      // Try multiple variations to handle different Excel formats
+      const rollNumber = row['ROLL NO'] || row['Roll No'] || row['Roll No.'] || row['ROLL NO.'] ||
+                        row['Roll Number'] || row['RollNumber'] || row['RollNo'] || 
+                        row['ROLL NUMBER'] || row['ROLL_NUMBER'] || row['Roll_Number'] ||
+                        row['roll no'] || row['rollno'] || row['ROLLNO'] || '';
+      
+      const fullName = row['NAME'] || row['Name'] || row['Full Name'] || row['FullName'] ||
+                      row['FULL NAME'] || row['FULL_NAME'] || row['Full_Name'] ||
+                      row['Student Name'] || row['StudentName'] || row['STUDENT NAME'] ||
+                      row['name'] || row['full name'] || '';
+      
+      const course = row['COURSE'] || row['Course'] || row['Course Name'] || row['CourseName'] ||
+                    row['COURSE NAME'] || row['course'] || row['Program'] || row['PROGRAM'] || '';
+      
+      const batch = row['BATCH'] || row['Batch'] || row['Batch Year'] || row['BatchYear'] ||
+                   row['BATCH YEAR'] || row['batch'] || row['Year'] || row['YEAR'] ||
+                   row['Academic Year'] || row['AcademicYear'] || row['ACADEMIC YEAR'] || '';
+      
+      const email = row['Email'] || row['EMAIL'] || row['Email Id'] || row['EmailId'] ||
+                   row['EMAIL ID'] || row['Email Address'] || row['EmailAddress'] ||
+                   row['email'] || row['E-mail'] || '';
+      
+      const phone = row['Phone'] || row['PHONE'] || row['Phone Number'] || row['PhoneNumber'] ||
+                   row['PHONE NUMBER'] || row['Mobile'] || row['MOBILE'] ||
+                   row['Mobile Number'] || row['MobileNumber'] || row['MOBILE NUMBER'] ||
+                   row['phone'] || row['mobile'] || row['Contact'] || row['CONTACT'] || '';
 
       if (!rollNumber || !fullName) {
         errors.push(`Row ${i + 2}: Missing roll number or name`);
