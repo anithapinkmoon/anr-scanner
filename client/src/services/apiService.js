@@ -63,6 +63,25 @@ export const exportAttendeesPDF = async () => {
 };
 
 /**
+ * Student APIs
+ */
+export const getStudentByRollNumber = async (rollNumber) => {
+  const response = await api.get(`/students/${rollNumber}`);
+  return response.data;
+};
+
+export const importStudentsFromExcel = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/students/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+/**
  * Helper function to download blob files
  */
 export const downloadBlob = (blob, filename) => {

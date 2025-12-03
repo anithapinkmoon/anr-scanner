@@ -59,7 +59,11 @@ export const registerAttendee = async (req, res) => {
       yearOfJoining,
       isCurrentlyWorking,
       yearOfLeaving,
-      yearsOfService
+      yearsOfService,
+      // Student specific fields
+      rollNumber,
+      course,
+      batch
     } = req.body;
 
     // Validation - fullName, designation, and phone are required for all
@@ -84,6 +88,16 @@ export const registerAttendee = async (req, res) => {
         success: false,
         message: 'Please specify your designation',
       });
+    }
+
+    // Student specific validation
+    if (designation === 'Student') {
+      if (!rollNumber || rollNumber.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          message: 'Roll number is required for students',
+        });
+      }
     }
 
     // Alumni specific validation
@@ -237,6 +251,10 @@ export const registerAttendee = async (req, res) => {
       isCurrentlyWorking: designation === 'Staff' ? (isCurrentlyWorking !== undefined ? isCurrentlyWorking : true) : null,
       yearOfLeaving: designation === 'Staff' && !isCurrentlyWorking ? parseYear(yearOfLeaving) : null,
       yearsOfService: designation === 'Staff' ? calculateYearsOfService(yearOfJoining, isCurrentlyWorking, yearOfLeaving) : null,
+      // Student specific fields
+      rollNumber: designation === 'Student' ? (rollNumber ? rollNumber.trim() : null) : null,
+      course: designation === 'Student' ? (course ? course.trim() : null) : null,
+      batch: designation === 'Student' ? (batch ? batch.trim() : null) : null,
     };
 
     const attendee = await Attendee.create(attendeeData);

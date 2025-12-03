@@ -21,6 +21,10 @@ model Attendee {
       designationOther String?   @db.VarChar(100) // If designation is "Other", specify here
       passedOutYear     Int?
   profilePhoto      String?   @db.Text
+  // Student specific fields
+  rollNumber        String?   @db.VarChar(50)
+  course            String?   @db.VarChar(100)
+  batch             String?   @db.VarChar(50)
   // Alumni specific fields
   intermediateYear  Int?
   intermediateGroup String?   @db.VarChar(50)
@@ -80,6 +84,21 @@ model Admin {
   createdAt DateTime @default(now())
 
   @@map("admins")
+}
+
+model Student {
+  id        Int      @id @default(autoincrement())
+  rollNumber String  @unique @db.VarChar(50)
+  fullName   String  @db.VarChar(255)
+  course     String? @db.VarChar(100)
+  batch      String? @db.VarChar(50)
+  email      String? @db.VarChar(255)
+  phone      String? @db.VarChar(20)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([rollNumber])
+  @@map("students")
 }
 
 enum Designation {

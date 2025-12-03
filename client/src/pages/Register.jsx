@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { registerAttendee } from '../services/apiService';
+import { registerAttendee, getStudentByRollNumber } from '../services/apiService';
 import InvitationCard from '../components/InvitationCard';
 import collegeLogo from '../assets/diamond.jpg';
 import collegeBannerLogo from '../assets/anr-college-logo.jpg';
@@ -83,9 +83,46 @@ const Register = () => {
     isCurrentlyWorking: true, // Default to currently working
     yearOfLeaving: '',
     yearsOfService: '', // Auto-calculated, read-only
+    // Student specific fields
+    rollNumber: '',
+    course: '',
+    batch: '',
   });
   const [loading, setLoading] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
+  const [studentLookupLoading, setStudentLookupLoading] = useState(false);
+  const rollNumberTimeoutRef = useRef(null);
+
+  // Lookup student by roll number
+  const lookupStudent = async (rollNumber) => {
+    if (!rollNumber || rollNumber.trim() === '') return;
+    
+    setStudentLookupLoading(true);
+    try {
+      const response = await getStudentByRollNumber(rollNumber.trim());
+      if (response.success && response.data) {
+        const student = response.data;
+        setFormData(prev => ({
+          ...prev,
+          fullName: student.fullName || prev.fullName,
+          course: student.course || prev.course,
+          batch: student.batch || prev.batch,
+          email: student.email || prev.email,
+          phone: student.phone || prev.phone,
+        }));
+        toast.success('Student details loaded successfully');
+      }
+    } catch (error) {
+      // Student not found - that's okay, user can enter manually
+      if (error.response?.status === 404) {
+        // Don't show error, just let user enter manually
+      } else {
+        toast.error('Error looking up student. Please enter details manually.');
+      }
+    } finally {
+      setStudentLookupLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     // If category changes, reset role and title
@@ -97,6 +134,36 @@ const Register = () => {
         staffRoleOther: '', // Reset other role field
         staffTitle: '', // Reset title when category changes
       });
+    } else if (e.target.name === 'rollNumber' && formData.designation === 'Student') {
+      // Handle roll number lookup for students
+      const rollNumber = e.target.value;
+      setFormData({
+        ...formData,
+        rollNumber: rollNumber,
+      });
+      
+      // Clear previous timeout
+      if (rollNumberTimeoutRef.current) {
+        clearTimeout(rollNumberTimeoutRef.current);
+      }
+      
+      // Lookup student when roll number is entered (debounce - wait 500ms after typing stops)
+      if (rollNumber && rollNumber.length >= 3) {
+        rollNumberTimeoutRef.current = setTimeout(() => {
+          lookupStudent(rollNumber);
+        }, 500);
+      } else if (!rollNumber) {
+        // Clear student data if roll number is cleared
+        setFormData(prev => ({
+          ...prev,
+          rollNumber: '',
+          fullName: '',
+          course: '',
+          batch: '',
+          email: prev.email || '',
+          phone: prev.phone || '',
+        }));
+      }
     } else {
       setFormData({
         ...formData,
@@ -658,6 +725,61 @@ const Register = () => {
                     placeholder="Please specify your designation *"
                     className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
                   />
+                </div>
+              )}
+
+              {/* Student Specific Fields */}
+              {formData.designation === 'Student' && (
+                <div className="space-y-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-4">Student Information</h3>
+                  
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Roll Number <span className="text-red-500">*</span></label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="rollNumber"
+                        value={formData.rollNumber}
+                        onChange={handleChange}
+                        required
+                        placeholder="Enter your roll number"
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      />
+                      {studentLookupLoading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Enter your roll number to auto-fill details</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Course</label>
+                      <input
+                        type="text"
+                        name="course"
+                        value={formData.course}
+                        onChange={handleChange}
+                        placeholder="Course"
+                        readOnly
+                        className="w-full px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Batch</label>
+                      <input
+                        type="text"
+                        name="batch"
+                        value={formData.batch}
+                        onChange={handleChange}
+                        placeholder="Batch"
+                        readOnly
+                        className="w-full px-3 py-2 text-sm bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
 
