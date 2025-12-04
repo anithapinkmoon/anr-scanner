@@ -531,3 +531,79 @@ export const verifyQRCode = async (req, res) => {
   }
 };
 
+// @desc    Get all registered attendees (Public)
+// @route   GET /api/attendees
+// @access  Public
+export const getRegisteredAttendees = async (req, res) => {
+  try {
+    const { 
+      search, 
+      designation, 
+      page = 1, 
+      limit = 50,
+      isScanned,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const query = {};
+
+    // Handle search (name, email, phone, attendeeCode)
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+        { attendeeCode: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Handle designation filter
+    if (designation) {
+      query.designation = designation;
+    }
+
+    // Handle isScanned filter
+    if (isScanned !== undefined) {
+      query.isScanned = isScanned === 'true' || isScanned === true;
+    }
+
+    // Only get primary attendees (not companions) by default
+    query.isPrimary = true;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get attendees (exclude qrCode for list view)
+    const attendees = await Attendee.find({
+      ...query,
+      skip,
+      limit: parseInt(limit),
+      select: '-qrCode',
+    });
+
+    // Get total count
+    const total = await Attendee.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      message: 'Registered attendees retrieved successfully',
+      data: {
+        attendees,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Get registered attendees error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching registered attendees',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
