@@ -81,6 +81,11 @@ export const Attendee = {
         where.primaryAttendeeId = query.primaryAttendeeId;
       }
 
+      // Handle isPrimary filter
+      if (query.isPrimary !== undefined) {
+        where.isPrimary = query.isPrimary === true || query.isPrimary === 'true';
+      }
+
       const options = {
         where,
         orderBy: { createdAt: 'desc' },
@@ -99,12 +104,44 @@ export const Attendee = {
           fullName: true,
           email: true,
           phone: true,
+          alternativeContact: true,
+          address: true,
           designation: true,
+          designationOther: true,
           passedOutYear: true,
           profilePhoto: true,
+          rollNumber: true,
+          course: true,
+          batch: true,
+          intermediateYear: true,
+          intermediateGroup: true,
+          degreeYear: true,
+          degreeGroup: true,
+          pgYear: true,
+          pgCourse: true,
+          nativePlace: true,
+          residentialAddress: true,
+          briefProfile: true,
+          staffRole: true,
+          staffCategory: true,
+          staffTitle: true,
+          yearOfJoining: true,
+          isCurrentlyWorking: true,
+          yearOfLeaving: true,
+          yearsOfService: true,
           attendeeCode: true,
           isScanned: true,
           entryTime: true,
+          isPrimary: true,
+          primaryAttendeeId: true,
+          registeredBy: true,
+          registrationNotes: true,
+          age: true,
+          relationship: true,
+          maxEntries: true,
+          usedEntries: true,
+          entryDays: true,
+          selectedDays: true,
           createdAt: true,
         };
       }
@@ -148,6 +185,11 @@ export const Attendee = {
       // Handle primaryAttendeeId filter
       if (query.primaryAttendeeId !== undefined && query.primaryAttendeeId !== null) {
         where.primaryAttendeeId = query.primaryAttendeeId;
+      }
+
+      // Handle isPrimary filter
+      if (query.isPrimary !== undefined) {
+        where.isPrimary = query.isPrimary === true || query.isPrimary === 'true';
       }
 
       return await prisma.attendee.count({ where });
