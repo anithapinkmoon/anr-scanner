@@ -63,22 +63,28 @@ export const importStudentsFromExcel = async (req, res) => {
 
     // Parse Excel file
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet);
-
-    if (!data || data.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Excel file is empty or invalid',
-      });
-    }
-
-    // Process and import students
+    
+    // Process ALL sheets in the Excel file
     const students = [];
     const errors = [];
+    let totalRows = 0;
 
-    for (let i = 0; i < data.length; i++) {
+    // Loop through all sheets
+    for (let sheetIndex = 0; sheetIndex < workbook.SheetNames.length; sheetIndex++) {
+      const sheetName = workbook.SheetNames[sheetIndex];
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet);
+
+      if (!data || data.length === 0) {
+        errors.push(`Sheet "${sheetName}": Empty or no data`);
+        continue;
+      }
+
+      console.log(`Processing sheet "${sheetName}" with ${data.length} rows`);
+
+      // Process each row in this sheet
+      for (let i = 0; i < data.length; i++) {
+        totalRows++;
       const row = data[i];
       
       // Map Excel columns - based on actual Excel format: S.No., NAME, COURSE, ROLL NO, BATCH
@@ -110,7 +116,7 @@ export const importStudentsFromExcel = async (req, res) => {
                    row['phone'] || row['mobile'] || row['Contact'] || row['CONTACT'] || '';
 
       if (!rollNumber || !fullName) {
-        errors.push(`Row ${i + 2}: Missing roll number or name`);
+        errors.push(`Sheet "${sheetName}", Row ${i + 2}: Missing roll number or name`);
         continue;
       }
 
@@ -137,17 +143,21 @@ export const importStudentsFromExcel = async (req, res) => {
 
         students.push(student);
       } catch (error) {
-        errors.push(`Row ${i + 2}: ${error.message}`);
+        errors.push(`Sheet "${sheetName}", Row ${i + 2}: ${error.message}`);
+      }
       }
     }
 
     res.json({
       success: true,
-      message: `Imported ${students.length} students successfully`,
+      message: `Imported ${students.length} students from ${workbook.SheetNames.length} sheet(s) successfully`,
       data: {
         imported: students.length,
-        total: data.length,
-        errors: errors.length > 0 ? errors : undefined,
+        total: totalRows,
+        sheetsProcessed: workbook.SheetNames.length,
+        sheetNames: workbook.SheetNames,
+        errors: errors.length > 0 ? errors.slice(0, 100) : undefined, // Limit errors to first 100
+        totalErrors: errors.length,
       },
     });
   } catch (error) {
