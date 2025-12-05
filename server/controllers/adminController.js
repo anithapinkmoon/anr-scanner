@@ -157,45 +157,53 @@ export const getAttendees = async (req, res) => {
     const total = await Attendee.countDocuments(query);
 
     // Fetch companions for all primary attendees
-    const primaryIds = attendees.map(a => a.id);
+    const primaryIds = attendees.map(a => parseInt(a.id));
     
     let companionsMap = {};
     if (primaryIds.length > 0) {
-      const allCompanions = await prisma.attendee.findMany({
-        where: {
-          primaryAttendeeId: { in: primaryIds },
-          isPrimary: false,
-        },
-        select: {
-          id: true,
-          fullName: true,
-          attendeeCode: true,
-          designation: true,
-          relationship: true,
-          age: true,
-          email: true,
-          phone: true,
-          profilePhoto: true,
-          passedOutYear: true,
-          createdAt: true,
-        },
-      });
+      try {
+        const allCompanions = await prisma.attendee.findMany({
+          where: {
+            primaryAttendeeId: { in: primaryIds },
+            isPrimary: false,
+          },
+          select: {
+            id: true,
+            fullName: true,
+            attendeeCode: true,
+            designation: true,
+            relationship: true,
+            age: true,
+            email: true,
+            phone: true,
+            profilePhoto: true,
+            passedOutYear: true,
+            primaryAttendeeId: true,
+            createdAt: true,
+          },
+        });
 
-      // Group companions by primaryAttendeeId
-      allCompanions.forEach(companion => {
-        const primaryId = companion.primaryAttendeeId;
-        if (!companionsMap[primaryId]) {
-          companionsMap[primaryId] = [];
-        }
-        companionsMap[primaryId].push(companion);
-      });
+        // Group companions by primaryAttendeeId
+        allCompanions.forEach(companion => {
+          const primaryId = parseInt(companion.primaryAttendeeId);
+          if (!companionsMap[primaryId]) {
+            companionsMap[primaryId] = [];
+          }
+          companionsMap[primaryId].push(companion);
+        });
+      } catch (error) {
+        console.error('Error fetching companions:', error);
+      }
     }
 
     // Attach companions to each primary attendee
-    const attendeesWithCompanions = attendees.map(attendee => ({
-      ...attendee,
-      companions: companionsMap[attendee.id] || undefined,
-    }));
+    const attendeesWithCompanions = attendees.map(attendee => {
+      const attendeeId = parseInt(attendee.id);
+      return {
+        ...attendee,
+        companions: companionsMap[attendeeId] || [],
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -389,6 +397,7 @@ export const getAttendeeById = async (req, res) => {
           phone: true,
           profilePhoto: true,
           passedOutYear: true,
+          primaryAttendeeId: true,
           createdAt: true,
         },
         orderBy: {
@@ -401,7 +410,7 @@ export const getAttendeeById = async (req, res) => {
       success: true,
       data: {
         ...attendee,
-        companions: companions && companions.length > 0 ? companions : undefined,
+        companions: companions && companions.length > 0 ? companions : [],
       },
     });
   } catch (error) {
