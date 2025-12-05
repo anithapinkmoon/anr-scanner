@@ -1,6 +1,7 @@
 import Attendee from '../models/Attendee.js';
 import { generateAttendeeCode } from '../utils/generateAttendeeCode.js';
 import { generateQRCode } from '../utils/qrGenerator.js';
+import prisma from '../database/prisma.js';
 
 // Helper function to generate placeholder email if not provided
 const generatePlaceholderEmail = (attendeeCode) => {
@@ -584,11 +585,60 @@ export const getRegisteredAttendees = async (req, res) => {
     // Get total count
     const total = await Attendee.countDocuments(query);
 
+    // Fetch companions for all primary attendees
+    const primaryIds = attendees.map(a => parseInt(a.id));
+    
+    let companionsMap = {};
+    if (primaryIds.length > 0) {
+      try {
+        const allCompanions = await prisma.attendee.findMany({
+          where: {
+            primaryAttendeeId: { in: primaryIds },
+            isPrimary: false,
+          },
+          select: {
+            id: true,
+            fullName: true,
+            attendeeCode: true,
+            designation: true,
+            relationship: true,
+            age: true,
+            email: true,
+            phone: true,
+            profilePhoto: true,
+            passedOutYear: true,
+            primaryAttendeeId: true,
+            createdAt: true,
+          },
+        });
+
+        // Group companions by primaryAttendeeId
+        allCompanions.forEach(companion => {
+          const primaryId = parseInt(companion.primaryAttendeeId);
+          if (!companionsMap[primaryId]) {
+            companionsMap[primaryId] = [];
+          }
+          companionsMap[primaryId].push(companion);
+        });
+      } catch (error) {
+        console.error('Error fetching companions:', error);
+      }
+    }
+
+    // Attach companions to each primary attendee
+    const attendeesWithCompanions = attendees.map(attendee => {
+      const attendeeId = parseInt(attendee.id);
+      return {
+        ...attendee,
+        companions: companionsMap[attendeeId] || [],
+      };
+    });
+
     res.status(200).json({
       success: true,
       message: 'Registered attendees retrieved successfully',
       data: {
-        attendees,
+        attendees: attendeesWithCompanions,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
