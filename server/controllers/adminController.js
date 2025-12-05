@@ -142,6 +142,9 @@ export const getAttendees = async (req, res) => {
       query.designation = designation;
     }
 
+    // Only get primary attendees (not companions) by default
+    query.isPrimary = true;
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const attendees = await Attendee.find({
@@ -153,10 +156,51 @@ export const getAttendees = async (req, res) => {
 
     const total = await Attendee.countDocuments(query);
 
+    // Fetch companions for all primary attendees
+    const primaryIds = attendees.map(a => a.id);
+    
+    let companionsMap = {};
+    if (primaryIds.length > 0) {
+      const allCompanions = await prisma.attendee.findMany({
+        where: {
+          primaryAttendeeId: { in: primaryIds },
+          isPrimary: false,
+        },
+        select: {
+          id: true,
+          fullName: true,
+          attendeeCode: true,
+          designation: true,
+          relationship: true,
+          age: true,
+          email: true,
+          phone: true,
+          profilePhoto: true,
+          passedOutYear: true,
+          createdAt: true,
+        },
+      });
+
+      // Group companions by primaryAttendeeId
+      allCompanions.forEach(companion => {
+        const primaryId = companion.primaryAttendeeId;
+        if (!companionsMap[primaryId]) {
+          companionsMap[primaryId] = [];
+        }
+        companionsMap[primaryId].push(companion);
+      });
+    }
+
+    // Attach companions to each primary attendee
+    const attendeesWithCompanions = attendees.map(attendee => ({
+      ...attendee,
+      companions: companionsMap[attendee.id] || undefined,
+    }));
+
     res.status(200).json({
       success: true,
       data: {
-        attendees,
+        attendees: attendeesWithCompanions,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
@@ -326,9 +370,39 @@ export const getAttendeeById = async (req, res) => {
       });
     }
 
+    // If it's a primary attendee, fetch companions
+    let companions = undefined;
+    if (attendee.isPrimary === true) {
+      companions = await prisma.attendee.findMany({
+        where: {
+          primaryAttendeeId: parseInt(id),
+          isPrimary: false,
+        },
+        select: {
+          id: true,
+          fullName: true,
+          attendeeCode: true,
+          designation: true,
+          relationship: true,
+          age: true,
+          email: true,
+          phone: true,
+          profilePhoto: true,
+          passedOutYear: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+    }
+
     res.status(200).json({
       success: true,
-      data: attendee,
+      data: {
+        ...attendee,
+        companions: companions && companions.length > 0 ? companions : undefined,
+      },
     });
   } catch (error) {
     console.error('Get attendee error:', error);
